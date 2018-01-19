@@ -512,7 +512,7 @@ static inline uint32_t adjust_fan(struct avalon7_info *info, int id)
 		int diff = tdiff;
 
 		if (tdiff > 0) {
-			int divisor = -delta / AVA7_DEFAULT_TEMP_HYSTERESIS + 1;
+			int divisor = -delta + 1;
 
 			/* Adjust fanspeed by temperature change proportional to
 			 * diff from optimal. */
@@ -522,6 +522,7 @@ static inline uint32_t adjust_fan(struct avalon7_info *info, int id)
 			if (t < info->temp_target[id] - AVA7_DEFAULT_TEMP_HYSTERESIS && !tdiff)
 				diff -= 1;
 		}
+
 		info->fan_pct[id] += diff;
 	}
 
