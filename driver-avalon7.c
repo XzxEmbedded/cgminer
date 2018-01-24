@@ -537,6 +537,7 @@ out:
 		pwm = get_fan_pwm(opt_avalon7_fan_max);
 
 	applog(LOG_DEBUG, "[%d], Adjust_fan: %dC-%d%%(%03x)", id, t, info->fan_pct[id], pwm);
+	applog(LOG_DEBUG, "Adjust_fan avalon761");
 
 	return pwm;
 }
