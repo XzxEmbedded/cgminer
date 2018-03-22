@@ -127,6 +127,8 @@ char *curly = ":D";
 #include "driver-bitmain.h"
 #endif
 
+#include "hexdump.c"
+
 #if defined(USE_BITFORCE) || defined(USE_ICARUS) || defined(USE_AVALON) || defined(USE_AVALON2) || defined(USE_MODMINER)
 #	define USE_FPGA
 #endif
@@ -7768,6 +7770,9 @@ bool submit_tested_work(struct thr_info *thr, struct work *work)
 {
 	struct work *work_out;
 	update_work_stats(thr, work);
+
+	applog(LOG_DEBUG, "work data: ");
+	hexdump(work->data, 128);
 
 	if (!fulltest(work->hash, work->target)) {
 		applog(LOG_INFO, "%s %d: Share above target", thr->cgpu->drv->name,
