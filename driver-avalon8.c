@@ -630,7 +630,7 @@ static int decode_pkg(struct cgpu_info *avalon8, struct avalon8_ret *ar, int mod
 		}
 
 		for (i = 0; i < info->miner_count[modular_id]; i++) {
-			memcpy(&vin, ar->data + 8 + i * 2, 2);
+			memcpy(&vin, ar->data + i * 2, 2);
 			info->get_vin[modular_id][i] = decode_vin(info, modular_id, be16toh(vin));
 		}
 		break;
