@@ -120,7 +120,7 @@ struct avalon8_dev_description avalon8_dev_table[] = {
 	{
 		"821",
 		821,
-		4,
+		6,
 		26,
 		AVA8_MM821_VIN_ADC_RATIO,
 		AVA8_MM821_VOUT_ADC_RATIO,
@@ -150,7 +150,7 @@ struct avalon8_dev_description avalon8_dev_table[] = {
 	{
 		"841",
 		841,
-		4,
+		1,
 		26,
 		AVA8_MM841_VIN_ADC_RATIO,
 		AVA8_MM841_VOUT_ADC_RATIO,
@@ -623,7 +623,7 @@ static int decode_pkg(struct cgpu_info *avalon8, struct avalon8_ret *ar, int mod
 	case AVA8_P_STATUS_PMU:
 		/* TODO: decode ntc led from PMU */
 		applog(LOG_DEBUG, "%s-%d-%d: AVA8_P_STATUS_PMU", avalon8->drv->name, avalon8->device_id, modular_id);
-		info->power_good[modular_id] = ar->data[16];
+		info->power_good[modular_id] = ar->data[4];
 		for (i = 0; i < AVA8_DEFAULT_PMU_CNT; i++) {
 			memcpy(&info->pmu_version[modular_id][i], ar->data + 24 + (i * 4), 4);
 			info->pmu_version[modular_id][i][4] = '\0';
