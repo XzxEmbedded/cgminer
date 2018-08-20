@@ -103,6 +103,16 @@
 #define AVA831_DEFAULT_SPDLOW		2
 #define AVA831_DEFAULT_NONCE_MASK	27
 
+#define AVA8_DEFAULT_VOLT_ADJUST_STEP		3
+#define AVA8_DEFAULT_FREQ_ADJUST_STEP		100
+#define AVA8_DEFAULT_TEMP_SUB_FREQ_VOLTAGE	2776
+#define AVA8_DEFAULT_TEMP_ADD_FREQ_VOLTAGE	2673
+
+#define AVA8_TEMP_ADJUST_MIX	60
+#define AVA8_TEMP_ADJUST_MAX	100
+#define AVA8_FREQ_ADJUST_LEVEL_MIX	1
+#define AVA8_FREQ_ADJUST_LEVEL_MAX	4
+
 #define AVA8_DEFAULT_IIC_DETECT	false
 
 #define AVA8_PWM_MAX	0x3FF
@@ -356,6 +366,10 @@ struct avalon8_dev_description {
 extern char *set_avalon8_fan(char *arg);
 extern char *set_avalon8_freq(char *arg);
 extern char *set_avalon8_voltage_level(char *arg);
+extern char *set_avalon8_freq_adjust_step(char *arg);
+extern char *set_avalon8_voltage_level_adjust_step(char *arg);
+extern char *set_avalon8_temp_add_freq_voltage(char *arg);
+extern char *set_avalon8_temp_sub_freq_voltage(char *arg);
 extern char *set_avalon8_voltage_level_offset(char *arg);
 extern int opt_avalon8_temp_target;
 extern int opt_avalon8_polling_delay;

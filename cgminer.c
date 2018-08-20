@@ -279,6 +279,10 @@ static char *opt_set_avalon8_voltage_level;
 static char *opt_set_avalon8_voltage_level_offset;
 static char *opt_set_avalon8_freq;
 static char *opt_set_avalon8_asic_otp;
+static char *opt_set_avalon8_freq_adjust_step;
+static char *opt_set_avalon8_voltage_level_adjust_step;
+static char *opt_set_avalon8_temp_add_freq_voltage;
+static char *opt_set_avalon8_temp_sub_freq_voltage;
 #endif
 #ifdef USE_AVALON_MINER
 static char *opt_set_avalonm_voltage;
@@ -1588,6 +1592,18 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_CBARG("--avalon8-cinfo-asic",
 		     set_avalon8_asic_otp, NULL, &opt_set_avalon8_asic_otp,
 		     "Set Avalon8 cinfo asic index, range:[0, 25], step: 1"),
+	OPT_WITH_CBARG("--avalon8-freq-adjust-step",
+		     set_avalon8_freq_adjust_step, NULL, &opt_set_avalon8_freq_adjust_step,
+		     "Set Avalon8 default adjust step frequency, frequency level:[1, 2, 3, 4]"),
+	OPT_WITH_CBARG("--avalon8-voltage-level-adjust-step",
+		     set_avalon8_voltage_level_adjust_step, NULL, &opt_set_avalon8_voltage_level_adjust_step,
+		     "Set Avalon8 adjust step level of core voltage, range:[0, 15], step: 1"),
+	OPT_WITH_ARG("--avalon8-temp-sub-freq-voltage",
+		     set_avalon8_temp_sub_freq_voltage, NULL, &opt_set_avalon8_temp_sub_freq_voltage,
+		     "Set Avalon8 target temperature for subtracting freq and voltage, range:[60, 100], step: 1"),
+	OPT_WITH_ARG("--avalon8-temp-add-freq-voltage",
+		     set_avalon8_temp_add_freq_voltage, NULL, &opt_set_avalon8_temp_add_freq_voltage,
+		     "Set Avalon8 target temperature for adding freq and voltage, range:[60, 100], step: 1"),
 #endif
 #ifdef USE_AVALON_MINER
 	OPT_WITH_CBARG("--avalonm-voltage",

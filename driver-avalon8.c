@@ -27,6 +27,11 @@ int opt_avalon8_fan_max = AVA8_DEFAULT_FAN_MAX;
 int opt_avalon8_voltage_level = AVA8_INVALID_VOLTAGE_LEVEL;
 int opt_avalon8_voltage_level_offset = AVA8_DEFAULT_VOLTAGE_LEVEL_OFFSET;
 
+int opt_avalon8_freq_adjust_step = AVA8_DEFAULT_FREQ_ADJUST_STEP;
+int opt_avalon8_voltage_level_adjust_step = AVA8_DEFAULT_VOLT_ADJUST_STEP;
+int opt_avalon8_temp_add_freq_voltage = AVA8_DEFAULT_TEMP_ADD_FREQ_VOLTAGE;
+int opt_avalon8_temp_sub_freq_voltage = AVA8_DEFAULT_TEMP_SUB_FREQ_VOLTAGE;
+
 int opt_avalon8_asic_otp = AVA8_INVALID_ASIC_OTP;
 static uint8_t opt_avalon8_cycle_hit_flag;
 
@@ -224,6 +229,18 @@ static double decode_pvt_temp(uint16_t pvt_code)
 	return g + h * (pvt_code / cal5 - 0.5) + j * fclkm;
 }
 
+static uint16_t encode_pvt_temp(double temp)
+{
+	double g = 60.0;
+	double h = 200.0;
+	double cal5 = 4094.0;
+	double j = -0.1;
+	double fclkm = 6.25;
+
+	/* Mode2 temperature equation */
+	return ((temp - g - j * fclkm) / h + 0.5) * cal5;
+}
+
 static uint32_t decode_pvt_volt(uint16_t volt)
 {
 	double vref = 1.20;
@@ -338,6 +355,70 @@ char *set_avalon8_freq(char *arg)
 		opt_avalon8_freq[i] = val[i];
 
 	return NULL;
+}
+
+char *set_avalon8_freq_adjust_step(char *arg)
+{
+       int val, ret;
+
+       ret = sscanf(arg, "%d", &val);
+       if (ret < 1)
+               return "No value passed to avalon8-freq-adjust-step";
+
+       if (val < AVA8_FREQ_ADJUST_LEVEL_MIX || val > AVA8_FREQ_ADJUST_LEVEL_MAX)
+               return "Invalid value passed to avalon8-freq-adjust-step";
+
+       opt_avalon8_freq_adjust_step = val * 25;
+
+       return NULL;
+}
+
+char *set_avalon8_voltage_level_adjust_step(char *arg)
+{
+       int val, ret;
+
+       ret = sscanf(arg, "%d", &val);
+       if (ret < 1)
+               return "No value passed to avalon8-voltage-level-adjust-step";
+
+       if (val < AVA8_DEFAULT_VOLTAGE_LEVEL_MIN || val > AVA8_DEFAULT_VOLTAGE_LEVEL_MAX)
+               return "Invalid value passed to avalon8-voltage-level-adjust-step";
+
+       opt_avalon8_voltage_level_adjust_step = val;
+
+       return NULL;
+}
+
+char *set_avalon8_temp_add_freq_voltage(char *arg)
+{
+       int val, ret;
+
+       ret = sscanf(arg, "%d", &val);
+       if (ret < 1)
+               return "No value passed to avalon8-temp-add-freq-voltage";
+
+       if (val < AVA8_TEMP_ADJUST_MIX || val > AVA8_TEMP_ADJUST_MAX)
+               return "Invalid value passed to avalon8-temp-add-freq-voltage";
+
+       opt_avalon8_temp_add_freq_voltage = encode_pvt_temp(val);
+
+       return NULL;
+}
+
+char *set_avalon8_temp_sub_freq_voltage(char *arg)
+{
+       int val, ret;
+
+       ret = sscanf(arg, "%d", &val);
+       if (ret < 1)
+               return "No value passed to avalon8-temp-sub-freq-voltage";
+
+       if (val < AVA8_TEMP_ADJUST_MIX || val > AVA8_TEMP_ADJUST_MAX)
+               return "Invalid value passed to avalon8-temp-sub-freq-voltage";
+
+       opt_avalon8_temp_sub_freq_voltage = encode_pvt_temp(val);
+
+       return NULL;
 }
 
 char *set_avalon8_voltage_level(char *arg)
@@ -1791,6 +1872,24 @@ static void avalon8_set_voltage_level(struct cgpu_info *avalon8, int addr, unsig
 			avalon8->drv->name, avalon8->device_id, addr,
 			i, voltage[0], voltage[info->miner_count[addr] - 1]);
 
+	tmp = be32toh(opt_avalon8_voltage_level_adjust_step);
+	memcpy(send_pkg.data + i * 4, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon8 set voltage level adjust step %u",
+			avalon8->drv->name, avalon8->device_id, addr,
+			opt_avalon8_voltage_level_adjust_step);
+
+	tmp = be32toh(opt_avalon8_temp_sub_freq_voltage);
+	memcpy(send_pkg.data + i * 4 + 4, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon8 set temp sub freq and voltage %u",
+			avalon8->drv->name, avalon8->device_id, addr,
+			opt_avalon8_temp_sub_freq_voltage);
+
+	tmp = be32toh(opt_avalon8_temp_add_freq_voltage);
+	memcpy(send_pkg.data + i * 4 + 8, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon8 set temp add freq and voltage %u",
+			avalon8->drv->name, avalon8->device_id, addr,
+			opt_avalon8_temp_add_freq_voltage);
+
 	/* Package the data */
 	avalon8_init_pkg(&send_pkg, AVA8_P_SET_VOLT, 1, 1);
 	if (addr == AVA8_MODULE_BROADCAST)
@@ -1859,6 +1958,15 @@ static void avalon8_set_freq(struct cgpu_info *avalon8, int addr, int miner_id, 
 	applog(LOG_DEBUG, "%s-%d-%d: avalon8 set freq miner %x-%x",
 			avalon8->drv->name, avalon8->device_id, addr,
 			miner_id, be32toh(tmp));
+
+	if (opt_avalon8_freq_adjust_step % 25)
+		opt_avalon8_freq_adjust_step = 25;
+
+	tmp = be32toh(opt_avalon8_freq_adjust_step);
+	memcpy(send_pkg.data + AVA8_DEFAULT_PLL_CNT * 4 + 8, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon8 set freq adjust step %u",
+			avalon8->drv->name, avalon8->device_id, addr,
+			opt_avalon8_freq_adjust_step);
 
 	/* Package the data */
 	avalon8_init_pkg(&send_pkg, AVA8_P_SET_PLL, miner_id + 1, info->miner_count[addr]);
