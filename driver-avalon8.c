@@ -27,10 +27,10 @@ int opt_avalon8_fan_max = AVA8_DEFAULT_FAN_MAX;
 int opt_avalon8_voltage_level = AVA8_INVALID_VOLTAGE_LEVEL;
 int opt_avalon8_voltage_level_offset = AVA8_DEFAULT_VOLTAGE_LEVEL_OFFSET;
 
-int opt_avalon8_freq_adjust_step = AVA8_DEFAULT_FREQ_ADJUST_STEP;
+int opt_avalon8_freq_adjust_step = AVA8_INVALID_FREQ_ADJUST_STEP;
 int opt_avalon8_voltage_level_adjust_step = AVA8_DEFAULT_VOLT_ADJUST_STEP;
-int opt_avalon8_temp_add_freq_voltage = AVA8_DEFAULT_TEMP_ADD_FREQ_VOLTAGE;
-int opt_avalon8_temp_sub_freq_voltage = AVA8_DEFAULT_TEMP_SUB_FREQ_VOLTAGE;
+int opt_avalon8_temp_add_freq_voltage = AVA8_INVALID_TEMP_ADD_FREQ_VOLTAGE;
+int opt_avalon8_temp_sub_freq_voltage = AVA8_INVALID_TEMP_SUB_FREQ_VOLTAGE;
 
 int opt_avalon8_asic_otp = AVA8_INVALID_ASIC_OTP;
 static uint8_t opt_avalon8_cycle_hit_flag;
@@ -2240,8 +2240,28 @@ static int64_t avalon8_scanhash(struct thr_info *thr)
 		}
 		if (update_settings) {
 			cg_wlock(&info->update_lock);
+
+			if (!strncmp((char *)&(info->mm_version[i]), "851", 3)) {
+				if (opt_avalon8_temp_add_freq_voltage == AVA8_INVALID_TEMP_ADD_FREQ_VOLTAGE)
+					opt_avalon8_temp_add_freq_voltage = AVA851_DEFAULT_TEMP_ADD_FREQ_VOLTAGE;
+				if (opt_avalon8_temp_sub_freq_voltage == AVA8_INVALID_TEMP_SUB_FREQ_VOLTAGE)
+					opt_avalon8_temp_sub_freq_voltage = AVA851_DEFAULT_TEMP_SUB_FREQ_VOLTAGE;
+			} else {
+				if (opt_avalon8_temp_add_freq_voltage == AVA8_INVALID_TEMP_ADD_FREQ_VOLTAGE)
+					opt_avalon8_temp_add_freq_voltage = AVA841_DEFAULT_TEMP_ADD_FREQ_VOLTAGE;
+				if (opt_avalon8_temp_sub_freq_voltage == AVA8_INVALID_TEMP_SUB_FREQ_VOLTAGE)
+					opt_avalon8_temp_sub_freq_voltage = AVA841_DEFAULT_TEMP_SUB_FREQ_VOLTAGE;
+			}
 			avalon8_set_voltage_level(avalon8, i, info->set_voltage_level[i]);
 			avalon8_set_asic_otp(avalon8, i, info->set_asic_otp[i]);
+
+			if (!strncmp((char *)&(info->mm_version[i]), "851", 3)) {
+				if (opt_avalon8_freq_adjust_step == AVA8_INVALID_FREQ_ADJUST_STEP)
+					opt_avalon8_freq_adjust_step = AVA851_DEFAULT_FREQ_ADJUST_STEP;
+			} else {
+				if (opt_avalon8_freq_adjust_step == AVA8_INVALID_FREQ_ADJUST_STEP)
+					opt_avalon8_freq_adjust_step = AVA841_DEFAULT_FREQ_ADJUST_STEP;
+			}
 			for (j = 0; j < info->miner_count[i]; j++)
 				avalon8_set_freq(avalon8, i, j, info->set_frequency[i][j]);
 			if (opt_avalon8_smart_speed) {
