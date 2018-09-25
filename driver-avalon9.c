@@ -694,6 +694,21 @@ static int decode_pkg(struct cgpu_info *avalon9, struct avalon9_ret *ar, int mod
 			}
 		}
 		break;
+	case AVA9_P_STATUS_PVT_RO:
+		applog(LOG_DEBUG, "%s-%d-%d: AVA9_P_STATUS_PVT_RO", avalon9->drv->name, avalon9->device_id, modular_id);
+		{
+			uint8_t miner_id;
+			uint8_t asic_id;
+			uint8_t channel_id;
+
+			miner_id = ar->data[4];
+			asic_id = ar->data[5];
+			channel_id = ar->data[6];
+
+			memcpy(&tmp, ar->data, 4);
+			info->pvt_ro[modular_id][miner_id][asic_id][channel_id] = be32toh(tmp);
+		}
+		break;
 	case AVA9_P_STATUS_FAC:
 		applog(LOG_DEBUG, "%s-%d-%d: AVA9_P_STATUS_FAC", avalon9->drv->name, avalon9->device_id, modular_id);
 		info->factory_info[0] = ar->data[0];
@@ -2304,6 +2319,22 @@ static struct api_data *avalon9_api_stats(struct cgpu_info *avalon9)
 				}
 
 				statbuf[strlen(statbuf) - 1] = ']';
+				statbuf[strlen(statbuf)] = '\0';
+			}
+
+			for (j = 0; j < info->miner_count[i]; j++) {
+				for (k = 0; k < info->asic_count[i]; k++) {
+					sprintf(buf, " PVT_RO%d_%02d[", j, k);
+					strcat(statbuf, buf);
+
+					for (m = 0; m < AVA9_DEFAULT_RO_CHANNEL_CNT; m++) {
+					    sprintf(buf, "0x%x ", info->pvt_ro[i][j][k][m]);
+					    strcat(statbuf, buf);
+					}
+
+					statbuf[strlen(statbuf) - 1] = ']';
+				}
+
 				statbuf[strlen(statbuf)] = '\0';
 			}
 
