@@ -153,6 +153,7 @@
 /* 0x27 reserved */
 #define AVA9_P_SET_FAC			0x28
 #define AVA9_P_SET_OC			0x29
+#define AVA9_P_SET_FAC_PLL		0x2a
 
 /* Have to send with I2C address */
 #define AVA9_P_POLLING			0x30
@@ -175,6 +176,7 @@
 #define AVA9_P_STATUS_FAC		0x4d
 #define AVA9_P_STATUS_OC		0x4e
 #define AVA9_P_STATUS_PVT_RO		0x4f
+#define AVA9_P_STATUS_FAC_PLL		0x50
 
 #define AVA9_MODULE_BROADCAST		0
 /* End of avalon9 protocol package type */
@@ -189,6 +191,9 @@
 #define AVA9_FREQ_PLLADJ_MODE		0x1
 
 #define AVA9_DEFAULT_FACTORY_INFO_CNT	(AVA9_DEFAULT_FACTORY_INFO_0_CNT + AVA9_DEFAULT_FACTORY_INFO_1_CNT)
+#define AVA9_DEFAULT_FACTORY_PLL_CNT	7
+#define AVA9_DEFAULT_FACTORY_PLL_MIN	-1200
+#define AVA9_DEFAULT_FACTORY_PLL_MAX	1200
 
 #define AVA9_DEFAULT_OVERCLOCKING_CNT	1
 
@@ -310,6 +315,8 @@ struct avalon9_info {
 
 	uint16_t vin_adc_ratio[AVA9_DEFAULT_MODULARS];
 	uint16_t vout_adc_ratio[AVA9_DEFAULT_MODULARS];
+
+	int16_t factory_pll[AVA9_DEFAULT_MODULARS][AVA9_DEFAULT_FACTORY_PLL_CNT];
 
 	bool conn_overloaded;
 };

@@ -488,6 +488,7 @@ static int decode_pkg(struct cgpu_info *avalon9, struct avalon9_ret *ar, int mod
 	uint32_t i, j;
 	int64_t last_diff1;
 	uint16_t vin;
+	int16_t fac_pll;
 
 	if (likely(avalon9->thr))
 		thr = avalon9->thr[0];
@@ -704,6 +705,13 @@ static int decode_pkg(struct cgpu_info *avalon9, struct avalon9_ret *ar, int mod
 	case AVA9_P_STATUS_FAC:
 		applog(LOG_DEBUG, "%s-%d-%d: AVA9_P_STATUS_FAC", avalon9->drv->name, avalon9->device_id, modular_id);
 		info->factory_info[0] = ar->data[0];
+		break;
+	case AVA9_P_STATUS_FAC_PLL:
+		applog(LOG_DEBUG, "%s-%d-%d: AVA9_P_STATUS_FAC_PLL", avalon9->drv->name, avalon9->device_id, modular_id);
+		for (i = 0; i < AVA9_DEFAULT_FACTORY_PLL_CNT; i++) {
+			memcpy(&fac_pll, ar->data + i * 2, 2);
+			info->factory_pll[modular_id][i] = be16toh(fac_pll);
+		}
 		break;
 	case AVA9_P_STATUS_OC:
 		applog(LOG_DEBUG, "%s-%d-%d: AVA9_P_STATUS_OC", avalon9->drv->name, avalon9->device_id, modular_id);
@@ -1770,6 +1778,27 @@ static void avalon9_set_overclocking_info(struct cgpu_info *avalon9, int addr, u
 		avalon9_iic_xfer_pkg(avalon9, addr, &send_pkg, NULL);
 }
 
+static void avalon9_set_freq_info(struct cgpu_info *avalon9, int addr, int16_t value[])
+{
+	struct avalon9_pkg send_pkg;
+	int16_t tmp;
+	uint8_t i;
+
+	memset(send_pkg.data, 0, AVA9_P_DATA_LEN);
+
+	for (i = 0; i < AVA9_DEFAULT_FACTORY_PLL_CNT; i++) {
+		tmp = be16toh(value[i]);
+		memcpy(send_pkg.data + i * 2, &tmp, 2);
+	}
+
+	/* Package the data */
+	avalon9_init_pkg(&send_pkg, AVA9_P_SET_FAC_PLL, 1, 1);
+	if (addr == AVA9_MODULE_BROADCAST)
+		avalon9_send_bc_pkgs(avalon9, &send_pkg);
+	else
+		avalon9_iic_xfer_pkg(avalon9, addr, &send_pkg, NULL);
+}
+
 static void avalon9_set_ss_param(struct cgpu_info *avalon9, int addr)
 {
 	struct avalon9_pkg send_pkg;
@@ -2269,6 +2298,13 @@ static struct api_data *avalon9_api_stats(struct cgpu_info *avalon9)
 			sprintf(buf, " FAC0[%d]", info->factory_info[0]);
 			strcat(statbuf, buf);
 
+			strcat(statbuf, " FP[");
+			for (j = 0; j < AVA9_DEFAULT_FACTORY_PLL_CNT; j++) {
+				sprintf(buf, "%d ", info->factory_pll[i][j]);
+				strcat(statbuf, buf);
+			}
+			statbuf[strlen(statbuf) - 1] = ']';
+
 			sprintf(buf, " OC[%d]", info->overclocking_info[0]);
 			strcat(statbuf, buf);
 
@@ -2608,6 +2644,55 @@ char *set_avalon9_overclocking_info(struct cgpu_info *avalon9, char *arg)
 	return NULL;
 }
 
+char *set_avalon9_freq_info(struct cgpu_info *avalon9, char *arg)
+{
+	struct avalon9_info *info = avalon9->device_data;
+	int val0, val1, val2, val3, val4, val5, val6, idx;
+
+	if (!(*arg))
+		return NULL;
+
+	sscanf(arg, "%d-%d-%d-%d-%d-%d-%d-%d", &val0, &val1, &val2, &val3, &val4, &val5, &val6, &idx);
+
+	if ((val0 < AVA9_DEFAULT_FACTORY_PLL_MIN || val0 > AVA9_DEFAULT_FACTORY_PLL_MAX) ||
+			(val1 < AVA9_DEFAULT_FACTORY_PLL_MIN || val1 > AVA9_DEFAULT_FACTORY_PLL_MAX) ||
+			(val2 < AVA9_DEFAULT_FACTORY_PLL_MIN || val2 > AVA9_DEFAULT_FACTORY_PLL_MAX) ||
+			(val3 < AVA9_DEFAULT_FACTORY_PLL_MIN || val3 > AVA9_DEFAULT_FACTORY_PLL_MAX) ||
+			(val4 < AVA9_DEFAULT_FACTORY_PLL_MIN || val4 > AVA9_DEFAULT_FACTORY_PLL_MAX) ||
+			(val5 < AVA9_DEFAULT_FACTORY_PLL_MIN || val5 > AVA9_DEFAULT_FACTORY_PLL_MAX) ||
+			(val6 < AVA9_DEFAULT_FACTORY_PLL_MIN || val6 > AVA9_DEFAULT_FACTORY_PLL_MAX)) {
+		return "Invalid value passed to set_avalon9_factory_pll";
+	}
+
+	if ((val0 % 25 != 0) ||
+			(val1 % 25 != 0) ||
+			(val2 % 25 != 0) ||
+			(val3 % 25 != 0) ||
+			(val4 % 25 != 0) ||
+			(val5 % 25 != 0) ||
+			(val6 % 25 != 0)) {
+		return "Invalid 25 multiple to set_avalon9_factory_pll";
+	}
+
+	if (idx > AVA9_DEFAULT_MODULARS)
+		return "Invalid index value to set_avalon9_factory_pll";
+
+	info->factory_pll[idx][0] = val0;
+	info->factory_pll[idx][1] = val1;
+	info->factory_pll[idx][2] = val2;
+	info->factory_pll[idx][3] = val3;
+	info->factory_pll[idx][4] = val4;
+	info->factory_pll[idx][5] = val5;
+	info->factory_pll[idx][6] = val6;
+
+	avalon9_set_freq_info(avalon9, idx, (int16_t *)info->factory_pll[idx]);
+
+	applog(LOG_NOTICE, "%s-%d: Update factory pll %d, %d, %d, %d, %d, %d, %d",
+		avalon9->drv->name, avalon9->device_id, val0, val1, val2, val3, val4, val5, val6);
+
+	return NULL;
+}
+
 static char *avalon9_set_device(struct cgpu_info *avalon9, char *option, char *setting, char *replybuf)
 {
 	unsigned int val;
@@ -2745,6 +2830,15 @@ static char *avalon9_set_device(struct cgpu_info *avalon9, char *option, char *s
 		}
 
 		return set_avalon9_overclocking_info(avalon9, setting);
+	}
+
+	if (strcasecmp(option, "factory-pll") == 0) {
+		if (!setting || !*setting) {
+			sprintf(replybuf, "missing factory pll");
+			return replybuf;
+		}
+
+		return set_avalon9_freq_info(avalon9, setting);
 	}
 
 	sprintf(replybuf, "Unknown option: %s", option);
