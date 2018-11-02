@@ -1410,6 +1410,7 @@ static bool avalon8_prepare(struct thr_info *thr)
 	cgtime(&(info->last_fan_adj));
 	cgtime(&info->last_stratum);
 	cgtime(&info->last_detect);
+	cgtime(&info->last_wu);
 
 	cglock_init(&info->update_lock);
 	cglock_init(&info->pool0.data_lock);
@@ -1552,6 +1553,9 @@ static void detect_modules(struct cgpu_info *avalon8)
 		info->pid_e[i][1] = 0;
 		info->pid_e[i][2] = 0;
 		info->pid_0[i] = 0;
+
+		info->wu[i] = 0;
+		info->wu_volt_level_flag[i] = 0;
 
 		for (j = 0; j < info->miner_count[i]; j++) {
 			memset(info->chip_matching_work[i][j], 0, sizeof(uint64_t) * info->asic_count[i]);
@@ -1793,6 +1797,33 @@ static void avalon8_set_voltage_level(struct cgpu_info *avalon8, int addr, unsig
 		memcpy(send_pkg.data + i * 4, &tmp, 4);
 	}
 	applog(LOG_DEBUG, "%s-%d-%d: avalon8 set voltage miner %d, (%d-%d)",
+			avalon8->drv->name, avalon8->device_id, addr,
+			i, voltage[0], voltage[info->miner_count[addr] - 1]);
+
+	/* Package the data */
+	avalon8_init_pkg(&send_pkg, AVA8_P_SET_VOLT, 1, 1);
+	if (addr == AVA8_MODULE_BROADCAST)
+		avalon8_send_bc_pkgs(avalon8, &send_pkg);
+	else
+		avalon8_iic_xfer_pkg(avalon8, addr, &send_pkg, NULL);
+}
+
+static void avalon8_set_voltage_level_by_wu(struct cgpu_info *avalon8, int addr, unsigned int voltage[], uint8_t sub_vol)
+{
+	struct avalon8_info *info = avalon8->device_data;
+	struct avalon8_pkg send_pkg;
+	uint32_t tmp;
+	uint8_t i;
+
+	memset(send_pkg.data, 0, AVA8_P_DATA_LEN);
+
+	/* NOTE: miner_count should <= 8 */
+	for (i = 0; i < info->miner_count[addr]; i++) {
+		tmp = be32toh(encode_voltage(voltage[i] +
+				opt_avalon8_voltage_level_offset - sub_vol));
+		memcpy(send_pkg.data + i * 4, &tmp, 4);
+	}
+	applog(LOG_DEBUG, "%s-%d-%d: avalon8 set voltage miner by wu %d, (%d-%d)",
 			avalon8->drv->name, avalon8->device_id, addr,
 			i, voltage[0], voltage[info->miner_count[addr] - 1]);
 
@@ -2082,7 +2113,27 @@ static int64_t avalon8_scanhash(struct thr_info *thr)
 		detect_modules(avalon8);
 	}
 
-	/* Step 3: ASIC configrations (voltage and frequency) */
+	/* Step 3: Adjusting WU value for resetting voltage level */
+	if ((tdiff(&current, &(info->last_wu)) > AVA8_MODULE_WU_INTERVAL)) {
+		cgtime(&info->last_wu);
+		for (i = 1; i < AVA8_DEFAULT_MODULARS; i++) {
+			if (!info->enable[i])
+				continue;
+
+			/* WU > setting value, and don't reduce voltage */
+			if ((info->wu[i] > AVA8_DEFAULT_SUB_VOLT_WU) && (!info->wu_volt_level_flag[i])) {
+				info->wu_volt_level_flag[i] = 1;
+				avalon8_set_voltage_level_by_wu(avalon8, i, info->set_voltage_level[i], 1);
+			}
+
+			if ((info->wu[i] < AVA8_DEFAULT_WU) && (info->wu_volt_level_flag[i] == 1)) {
+			        info->wu_volt_level_flag[i] = 2;
+				avalon8_set_voltage_level_by_wu(avalon8, i, info->set_voltage_level[i], 0);
+			}
+		}
+	}
+
+	/* Step 4: ASIC configrations (voltage and frequency) */
 	for (i = 1; i < AVA8_DEFAULT_MODULARS; i++) {
 		if (!info->enable[i])
 			continue;
@@ -2177,12 +2228,12 @@ static int64_t avalon8_scanhash(struct thr_info *thr)
 		}
 	}
 
-	/* Step 4: Polling  */
+	/* Step 5: Polling  */
 	cg_rlock(&info->update_lock);
 	polling(avalon8);
 	cg_runlock(&info->update_lock);
 
-	/* Step 5: Calculate mm count */
+	/* Step 6: Calculate mm count */
 	for (i = 1; i < AVA8_DEFAULT_MODULARS; i++) {
 		if (info->enable[i])
 			count++;
@@ -2358,6 +2409,7 @@ static struct api_data *avalon8_api_stats(struct cgpu_info *avalon8)
 			}
 		}
 
+		info->wu[i] = info->diff1[i] / tdiff(&current, &(info->elapsed[i])) * 60.0;
 		mhsmm = avalon8_hash_cal(avalon8, i);
 		sprintf(buf, " GHSmm[%.2f] WU[%.2f] Freq[%.2f]", (float)mhsmm / 1000,
 					info->diff1[i] / tdiff(&current, &(info->elapsed[i])) * 60.0,

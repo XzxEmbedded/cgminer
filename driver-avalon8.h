@@ -55,6 +55,9 @@
 #define AVA8_DEFAULT_FREQUENCY		(AVA8_DEFAULT_FREQUENCY_MAX)
 #define AVA8_DEFAULT_FREQUENCY_SEL	3
 
+#define AVA8_DEFAULT_SUB_VOLT_WU	206800.00 /* 14.8T */
+#define AVA8_DEFAULT_WU			202600.00 /* 14.5T */
+
 #define AVA8_DEFAULT_MODULARS	7	/* Only support 6 modules maximum with one AUC */
 #define AVA8_DEFAULT_MINER_CNT	4
 #define AVA8_DEFAULT_ASIC_MAX	26
@@ -114,7 +117,8 @@
 #define AVA8_DRV_DIFFMAX	2700
 #define AVA8_ASIC_TIMEOUT_CONST	419430400 /* (2^32 * 1000) / (256 * 40) */
 
-#define AVA8_MODULE_DETECT_INTERVAL	30 /* 30 s */
+#define AVA8_MODULE_DETECT_INTERVAL	30 /* 30s */
+#define AVA8_MODULE_WU_INTERVAL		1800 /* 1800s */
 
 #define AVA8_AUC_VER_LEN	12	/* Version length: 12 (AUC-YYYYMMDD) */
 #define AVA8_AUC_SPEED		400000
@@ -241,6 +245,7 @@ struct avalon8_info {
 	struct timeval last_fan_adj;
 	struct timeval last_stratum;
 	struct timeval last_detect;
+	struct timeval last_wu;
 
 	cglock_t update_lock;
 
@@ -331,6 +336,8 @@ struct avalon8_info {
 	uint8_t power_good[AVA8_DEFAULT_MODULARS];
 	char pmu_version[AVA8_DEFAULT_MODULARS][AVA8_DEFAULT_PMU_CNT][5];
 	uint64_t diff1[AVA8_DEFAULT_MODULARS];
+	double wu[AVA8_DEFAULT_MODULARS];
+	uint8_t wu_volt_level_flag[AVA8_DEFAULT_MODULARS];
 
 	uint16_t vin_adc_ratio[AVA8_DEFAULT_MODULARS];
 	uint16_t vout_adc_ratio[AVA8_DEFAULT_MODULARS];
