@@ -714,7 +714,7 @@ static int decode_pkg(struct cgpu_info *avalonlc3, struct avalonlc3_ret *ar, int
 		applog(LOG_DEBUG, "%s-%d-%d: AVALC3_P_STATUS_POWER", avalonlc3->drv->name, avalonlc3->device_id, modular_id);
 
 		if (ar->data[12]) {
-			for (i = 0; i < AVALC3_DEFAULT_POWER_INFO_CNT - 1; i++) {
+			for (i = 0; i < AVALC3_DEFAULT_POWER_INFO_CNT; i++) {
 				memcpy(&power_info, ar->data + i * 2, 2);
 				info->power_info[i] = be16toh(power_info);
 			}
