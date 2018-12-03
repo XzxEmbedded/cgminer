@@ -420,7 +420,7 @@ static inline uint32_t adjust_fan(struct avalon9_info *info, int id)
 
 	if (t > AVA9_DEFAULT_PID_TEMP_MAX) {
 		info->pid_u[id] = opt_avalon9_fan_max;
-	} else if (t < AVA9_DEFAULT_PID_TEMP_MIN) {
+	} else if (t < AVA9_DEFAULT_PID_TEMP_MIN && info->pid_0[id] == 0) {
 		info->pid_u[id] = opt_avalon9_fan_min;
 	} else if (!info->pid_0[id]) {
 			/* first, init u as t */
