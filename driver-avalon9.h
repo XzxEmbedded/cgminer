@@ -59,8 +59,8 @@
 #define AVA9_DEFAULT_FREQUENCY_SEL	3
 
 #define AVA9_DEFAULT_MODULARS		7	/* Only support 6 modules maximum with one AUC */
-#define AVA9_DEFAULT_MINER_CNT		6
-#define AVA9_DEFAULT_ASIC_MAX		34
+#define AVA9_DEFAULT_MINER_CNT		2
+#define AVA9_DEFAULT_ASIC_MAX		68
 #define AVA9_DEFAULT_PLL_CNT		4
 #define AVA9_DEFAULT_CORE_VOLT_CNT	8
 

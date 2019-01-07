@@ -184,8 +184,8 @@ struct avalon9_dev_description avalon9_dev_table[] = {
 	{
 		"911",
 		911,
-		6,
-		34,
+		2,
+		68,
 		26,
 		{
 			AVA9_DEFAULT_FREQUENCY_0M,
