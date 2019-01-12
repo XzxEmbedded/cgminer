@@ -72,7 +72,7 @@ uint32_t opt_avalon9_pid_p = AVA9_DEFAULT_PID_P;
 uint32_t opt_avalon9_pid_i = AVA9_DEFAULT_PID_I;
 uint32_t opt_avalon9_pid_d = AVA9_DEFAULT_PID_D;
 
-uint32_t opt_avalon9_adjust_voltage = AVA9_DEFAULT_ADJUST_VOLTAGE;
+uint32_t opt_avalon9_adjust_volt_freq = AVA9_DEFAULT_ADJUST_VOLT_FREQ;
 
 int32_t opt_avalon9_adjust_volt_up_init = AVA9_DEFAULT_ADJUST_VOLT_UP_INIT;
 uint32_t opt_avalon9_adjust_volt_up_factor = AVA9_DEFAULT_ADJUST_VOLT_UP_FACTOR;
@@ -1835,11 +1835,11 @@ static void avalon9_set_voltage_level(struct cgpu_info *avalon9, int addr, unsig
 			avalon9->drv->name, avalon9->device_id, addr,
 			i, voltage[0], voltage[info->miner_count[addr] - 1]);
 
-	tmp = be32toh(opt_avalon9_adjust_voltage);
+	tmp = be32toh(opt_avalon9_adjust_volt_freq);
 	memcpy(send_pkg.data + 24, &tmp, 4);
-	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set adjust voltage %u",
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set adjust voltage and frequency %u",
 			avalon9->drv->name, avalon9->device_id, addr,
-			opt_avalon9_adjust_voltage);
+			opt_avalon9_adjust_volt_freq);
 
 	/* Package the data */
 	avalon9_init_pkg(&send_pkg, AVA9_P_SET_VOLT, 1, 1);

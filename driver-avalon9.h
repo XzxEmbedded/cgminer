@@ -94,7 +94,7 @@
 #define AVA9_DEFAULT_PID_TEMP_MIN	50
 #define AVA9_DEFAULT_PID_TEMP_MAX	100
 
-#define AVA9_DEFAULT_ADJUST_VOLTAGE	1
+#define AVA9_DEFAULT_ADJUST_VOLT_FREQ	1
 
 #define AVA9_DEFAULT_ADJUST_VOLT_UP_INIT 	40000
 #define AVA9_DEFAULT_ADJUST_VOLT_UP_FACTOR 	6
@@ -394,7 +394,7 @@ extern uint32_t opt_avalon9_tbase;
 extern uint32_t opt_avalon9_pid_p;
 extern uint32_t opt_avalon9_pid_i;
 extern uint32_t opt_avalon9_pid_d;
-extern uint32_t opt_avalon9_adjust_voltage;
+extern uint32_t opt_avalon9_adjust_volt_freq;
 
 #endif /* USE_AVALON9 */
 #endif /* _AVALON9_H_ */
