@@ -82,6 +82,14 @@ uint32_t opt_avalon9_adjust_volt_down_factor = AVA9_DEFAULT_ADJUST_VOLT_DOWN_FAC
 uint32_t opt_avalon9_adjust_volt_down_threshold = AVA9_DEFAULT_ADJUST_VOLT_DOWN_THRESHOLD;
 uint32_t opt_avalon9_adjust_volt_time = AVA9_DEFAULT_ADJUST_VOLT_TIME;
 
+int32_t opt_avalon9_adjust_freq_up_init = AVA9_DEFAULT_ADJUST_FREQ_UP_INIT;
+uint32_t opt_avalon9_adjust_freq_up_factor = AVA9_DEFAULT_ADJUST_FREQ_UP_FACTOR;
+uint32_t opt_avalon9_adjust_freq_up_threshold = AVA9_DEFAULT_ADJUST_FREQ_UP_THRESHOLD;
+int32_t opt_avalon9_adjust_freq_down_init = AVA9_DEFAULT_ADJUST_FREQ_DOWN_INIT;
+uint32_t opt_avalon9_adjust_freq_down_factor = AVA9_DEFAULT_ADJUST_FREQ_DOWN_FACTOR;
+uint32_t opt_avalon9_adjust_freq_down_threshold = AVA9_DEFAULT_ADJUST_FREQ_DOWN_THRESHOLD;
+uint32_t opt_avalon9_adjust_freq_time = AVA9_DEFAULT_ADJUST_FREQ_TIME;
+
 uint32_t cpm_table[] =
 {
 	0x04400000,
@@ -2065,6 +2073,63 @@ static void avalon9_set_adjust_voltage_option(struct cgpu_info *avalon9, int add
 	return;
 }
 
+static void avalon9_set_adjust_freq_option(struct cgpu_info *avalon9, int addr,
+						int32_t freq_up_init, uint32_t freq_up_factor, uint32_t freq_up_threshold,
+						int32_t freq_down_init, uint32_t freq_down_factor, uint32_t freq_down_threshold,
+						uint32_t freq_time)
+{
+	struct avalon9_info *info = avalon9->device_data;
+	struct avalon9_pkg send_pkg;
+	int32_t tmp;
+
+	memset(send_pkg.data, 0, AVA9_P_DATA_LEN);
+
+	tmp = be32toh(freq_up_init);
+	memcpy(send_pkg.data + 0, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set freq up init %d",
+			avalon9->drv->name, avalon9->device_id, addr, freq_up_init);
+
+	tmp = be32toh(freq_up_factor);
+	memcpy(send_pkg.data + 4, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set freq up factor %d",
+			avalon9->drv->name, avalon9->device_id, addr, freq_up_factor);
+
+	tmp = be32toh(freq_up_threshold);
+	memcpy(send_pkg.data + 8, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set freq up threshold %d",
+			avalon9->drv->name, avalon9->device_id, addr, freq_up_threshold);
+
+	tmp = be32toh(freq_down_init);
+	memcpy(send_pkg.data + 12, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set freq down init %d",
+			avalon9->drv->name, avalon9->device_id, addr, freq_down_init);
+
+	tmp = be32toh(freq_down_factor);
+	memcpy(send_pkg.data + 16, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set freq down factor %d",
+			avalon9->drv->name, avalon9->device_id, addr, freq_down_factor);
+
+	tmp = be32toh(freq_down_threshold);
+	memcpy(send_pkg.data + 20, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set freq down threshold %d",
+			avalon9->drv->name, avalon9->device_id, addr, freq_down_threshold);
+
+	tmp = be32toh(freq_time);
+	memcpy(send_pkg.data + 24, &tmp, 4);
+	applog(LOG_DEBUG, "%s-%d-%d: avalon9 set freq time %d",
+			avalon9->drv->name, avalon9->device_id, addr, freq_time);
+
+	/* Package the data */
+	avalon9_init_pkg(&send_pkg, AVA9_P_SET_ADJUST_FREQ, 1, 1);
+
+	if (addr == AVA9_MODULE_BROADCAST)
+		avalon9_send_bc_pkgs(avalon9, &send_pkg);
+	else
+		avalon9_iic_xfer_pkg(avalon9, addr, &send_pkg, NULL);
+
+	return;
+}
+
 static void avalon9_stratum_finish(struct cgpu_info *avalon9)
 {
 	struct avalon9_pkg send_pkg;
@@ -2236,6 +2301,16 @@ static int64_t avalon9_scanhash(struct thr_info *thr)
 								opt_avalon9_adjust_volt_down_factor,
 								opt_avalon9_adjust_volt_down_threshold,
 								opt_avalon9_adjust_volt_time);
+
+			avalon9_set_adjust_freq_option(avalon9, i,
+								opt_avalon9_adjust_freq_up_init,
+								opt_avalon9_adjust_freq_up_factor,
+								opt_avalon9_adjust_freq_up_threshold,
+								opt_avalon9_adjust_freq_down_init,
+								opt_avalon9_adjust_freq_down_factor,
+								opt_avalon9_adjust_freq_down_threshold,
+								opt_avalon9_adjust_freq_time);
+
 
 
 			avalon9_set_asic_otp(avalon9, i, info->set_asic_otp[i]);
@@ -2841,6 +2916,23 @@ char *set_avalon9_adjust_volt_info(char *arg)
 						&opt_avalon9_adjust_volt_time);
 	if (ret < 1)
 		return "Invalid value for adjust volt info";
+
+	return NULL;
+}
+
+char *set_avalon9_adjust_freq_info(char *arg)
+{
+	int ret;
+
+	ret = sscanf(arg, "%d-%d-%d-%d-%d-%d-%d", &opt_avalon9_adjust_freq_up_init,
+						&opt_avalon9_adjust_freq_up_factor,
+						&opt_avalon9_adjust_freq_up_threshold,
+						&opt_avalon9_adjust_freq_down_init,
+						&opt_avalon9_adjust_freq_down_factor,
+						&opt_avalon9_adjust_freq_down_threshold,
+						&opt_avalon9_adjust_freq_time);
+	if (ret < 1)
+		return "Invalid value for adjust freq info";
 
 	return NULL;
 }

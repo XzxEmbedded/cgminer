@@ -104,6 +104,14 @@
 #define AVA9_DEFAULT_ADJUST_VOLT_DOWN_THRESHOLD	18522
 #define AVA9_DEFAULT_ADJUST_VOLT_TIME 		600
 
+#define AVA9_DEFAULT_ADJUST_FREQ_UP_INIT 	40000
+#define AVA9_DEFAULT_ADJUST_FREQ_UP_FACTOR 	6
+#define AVA9_DEFAULT_ADJUST_FREQ_UP_THRESHOLD 	18164
+#define AVA9_DEFAULT_ADJUST_FREQ_DOWN_INIT 	0
+#define AVA9_DEFAULT_ADJUST_FREQ_DOWN_FACTOR 	4
+#define AVA9_DEFAULT_ADJUST_FREQ_DOWN_THRESHOLD	18522
+#define AVA9_DEFAULT_ADJUST_FREQ_TIME 		600
+
 #define AVA9_DEFAULT_ASIC_AVERAGE_TEMP_START	12
 #define AVA9_DEFAULT_ASIC_AVERAGE_TEMP_END	21
 
@@ -183,6 +191,7 @@
 #define AVA9_P_STATUS_OTP	0x4f
 #define AVA9_P_SET_ASIC_OTP	0x50
 #define AVA9_P_SET_ADJUST_VOLT	0x51
+#define AVA9_P_SET_ADJUST_FREQ	0x52
 
 #define AVA9_MODULE_BROADCAST	0
 /* End of avalon9 protocol package type */
@@ -358,6 +367,7 @@ extern char *set_avalon9_freq(char *arg);
 extern char *set_avalon9_voltage_level(char *arg);
 extern char *set_avalon9_voltage_level_offset(char *arg);
 extern char *set_avalon9_adjust_volt_info(char *arg);
+extern char *set_avalon9_adjust_freq_info(char *arg);
 extern char *set_avalon9_asic_otp(char *arg);
 extern int opt_avalon9_temp_target;
 extern int opt_avalon9_polling_delay;
