@@ -290,6 +290,7 @@ static char *opt_set_avalon9_voltage_level;
 static char *opt_set_avalon9_voltage_level_offset;
 static char *opt_set_avalon9_freq;
 static char *opt_set_avalon9_asic_otp;
+static char *opt_set_avalon9_adjust_volt_info;
 #endif
 #ifdef USE_AVALON_MINER
 static char *opt_set_avalonm_voltage;
@@ -1703,6 +1704,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--avalon9-adjust-voltage",
 		     set_int_0_to_1, opt_show_intval, &opt_avalon9_adjust_voltage,
 		     "Set Avalon9 adjust voltage, range 0-1, 0: disable, 1: enable"),
+	OPT_WITH_CBARG("--avalon9-adjust-volt-info",
+		     set_avalon9_adjust_volt_info, NULL, &opt_set_avalon9_adjust_volt_info,
+		     "Set Avalon9 adjust volt info, eg. up_init/factor/threshold, down_init/factor/threshold, adjust_time"),
 #endif
 #ifdef USE_AVALON_MINER
 	OPT_WITH_CBARG("--avalonm-voltage",

@@ -96,6 +96,14 @@
 
 #define AVA9_DEFAULT_ADJUST_VOLTAGE	1
 
+#define AVA9_DEFAULT_ADJUST_VOLT_UP_INIT 	40000
+#define AVA9_DEFAULT_ADJUST_VOLT_UP_FACTOR 	6
+#define AVA9_DEFAULT_ADJUST_VOLT_UP_THRESHOLD 	18164
+#define AVA9_DEFAULT_ADJUST_VOLT_DOWN_INIT 	0
+#define AVA9_DEFAULT_ADJUST_VOLT_DOWN_FACTOR 	4
+#define AVA9_DEFAULT_ADJUST_VOLT_DOWN_THRESHOLD	18522
+#define AVA9_DEFAULT_ADJUST_VOLT_TIME 		600
+
 #define AVA9_DEFAULT_ASIC_AVERAGE_TEMP_START	12
 #define AVA9_DEFAULT_ASIC_AVERAGE_TEMP_END	21
 
@@ -349,6 +357,7 @@ extern char *set_avalon9_fan(char *arg);
 extern char *set_avalon9_freq(char *arg);
 extern char *set_avalon9_voltage_level(char *arg);
 extern char *set_avalon9_voltage_level_offset(char *arg);
+extern char *set_avalon9_adjust_volt_info(char *arg);
 extern char *set_avalon9_asic_otp(char *arg);
 extern int opt_avalon9_temp_target;
 extern int opt_avalon9_polling_delay;

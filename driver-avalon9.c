@@ -74,6 +74,14 @@ uint32_t opt_avalon9_pid_d = AVA9_DEFAULT_PID_D;
 
 uint32_t opt_avalon9_adjust_voltage = AVA9_DEFAULT_ADJUST_VOLTAGE;
 
+int32_t opt_avalon9_adjust_volt_up_init = AVA9_DEFAULT_ADJUST_VOLT_UP_INIT;
+uint32_t opt_avalon9_adjust_volt_up_factor = AVA9_DEFAULT_ADJUST_VOLT_UP_FACTOR;
+uint32_t opt_avalon9_adjust_volt_up_threshold = AVA9_DEFAULT_ADJUST_VOLT_UP_THRESHOLD;
+int32_t opt_avalon9_adjust_volt_down_init = AVA9_DEFAULT_ADJUST_VOLT_DOWN_INIT;
+uint32_t opt_avalon9_adjust_volt_down_factor = AVA9_DEFAULT_ADJUST_VOLT_DOWN_FACTOR;
+uint32_t opt_avalon9_adjust_volt_down_threshold = AVA9_DEFAULT_ADJUST_VOLT_DOWN_THRESHOLD;
+uint32_t opt_avalon9_adjust_volt_time = AVA9_DEFAULT_ADJUST_VOLT_TIME;
+
 uint32_t cpm_table[] =
 {
 	0x04400000,
@@ -2219,6 +2227,17 @@ static int64_t avalon9_scanhash(struct thr_info *thr)
 		if (update_settings) {
 			cg_wlock(&info->update_lock);
 			avalon9_set_voltage_level(avalon9, i, info->set_voltage_level[i]);
+
+			avalon9_set_adjust_voltage_option(avalon9, i,
+								opt_avalon9_adjust_volt_up_init,
+								opt_avalon9_adjust_volt_up_factor,
+								opt_avalon9_adjust_volt_up_threshold,
+								opt_avalon9_adjust_volt_down_init,
+								opt_avalon9_adjust_volt_down_factor,
+								opt_avalon9_adjust_volt_down_threshold,
+								opt_avalon9_adjust_volt_time);
+
+
 			avalon9_set_asic_otp(avalon9, i, info->set_asic_otp[i]);
 			for (j = 0; j < info->miner_count[i]; j++)
 				avalon9_set_freq(avalon9, i, j, 0, info->set_frequency[i][j]);
@@ -2805,6 +2824,23 @@ char *set_avalon9_overclocking_info(struct cgpu_info *avalon9, char *arg)
 
 	applog(LOG_NOTICE, "%s-%d: Update Overclocking info %d",
 		avalon9->drv->name, avalon9->device_id, val);
+
+	return NULL;
+}
+
+char *set_avalon9_adjust_volt_info(char *arg)
+{
+	int ret;
+
+	ret = sscanf(arg, "%d-%d-%d-%d-%d-%d-%d", &opt_avalon9_adjust_volt_up_init,
+						&opt_avalon9_adjust_volt_up_factor,
+						&opt_avalon9_adjust_volt_up_threshold,
+						&opt_avalon9_adjust_volt_down_init,
+						&opt_avalon9_adjust_volt_down_factor,
+						&opt_avalon9_adjust_volt_down_threshold,
+						&opt_avalon9_adjust_volt_time);
+	if (ret < 1)
+		return "Invalid value for adjust volt info";
 
 	return NULL;
 }
