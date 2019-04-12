@@ -19,6 +19,7 @@
 #define get_fan_pwm(v)	(AVA9_PWM_MAX - (v) * AVA9_PWM_MAX / 100)
 
 int opt_avalon9_temp_target = AVA9_DEFAULT_TEMP_TARGET;
+int opt_avalon911s_temp_target = AVA911S_DEFAULT_TEMP_TARGET;
 
 int opt_avalon9_fan_min = AVA9_DEFAULT_FAN_MIN;
 int opt_avalon9_fan_max = AVA9_DEFAULT_FAN_MAX;
@@ -862,6 +863,11 @@ static int decode_pkg(struct cgpu_info *avalon9, struct avalon9_ret *ar, int mod
 	case AVA9_P_STATUS_FAC:
 		applog(LOG_DEBUG, "%s-%d-%d: AVA9_P_STATUS_FAC", avalon9->drv->name, avalon9->device_id, modular_id);
 		info->factory_info[modular_id][0] = ar->data[0];
+
+		/* A911S overpower set target temperatrue */
+		if (info->factory_info[modular_id][0])
+			info->temp_target[modular_id] = AVA911S_DEFAULT_TEMP_TARGET;
+
 		info->factory_info[modular_id][AVA9_DEFAULT_FACTORY_INFO_CNT] = ar->data[1];
 		break;
 	case AVA9_P_STATUS_OC:
@@ -2862,6 +2868,7 @@ char *set_avalon9_device_freq(struct cgpu_info *avalon9, char *arg)
 	return NULL;
 }
 
+/* A911S overpower use factory value to set chip target temperature, range: 0 - 1 */
 char *set_avalon9_factory_info(struct cgpu_info *avalon9, char *arg)
 {
 	struct avalon9_info *info = avalon9->device_data;
