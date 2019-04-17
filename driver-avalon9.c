@@ -219,6 +219,19 @@ struct avalon9_dev_description avalon9_dev_table[] = {
 			AVA9_DEFAULT_FREQUENCY_512M,
 			AVA9_DEFAULT_FREQUENCY_562M
 		}
+	},
+	{
+		"910",
+		910,
+		6,
+		34,
+		26,
+		{
+			AVA9_DEFAULT_FREQUENCY_0M,
+			AVA9_DEFAULT_FREQUENCY_475M,
+			AVA9_DEFAULT_FREQUENCY_525M,
+			AVA9_DEFAULT_FREQUENCY_575M
+		}
 	}
 };
 
@@ -2286,15 +2299,20 @@ static int64_t avalon9_scanhash(struct thr_info *thr)
 		switch (info->freq_mode[i]) {
 			case AVA9_FREQ_INIT_MODE:
 				update_settings = true;
-				for (j = 0; j < info->miner_count[i]; j++) {
-					for (k = 0; k < AVA9_DEFAULT_PLL_CNT; k++) {
-						/* Avalon911 Fixed power and don't set freq */
-						if ((info->mm_version[i][3] != 'V') && (opt_avalon9_freq[k] == AVA9_DEFAULT_FREQUENCY))
-							info->set_frequency[i][j][k] = opt_avalon911_freq[k];
-						else if (opt_avalon9_freq[k] != AVA9_DEFAULT_FREQUENCY)
-							info->set_frequency[i][j][k] = opt_avalon9_freq[k];
+
+				/* A911 may modify frequency value */
+				if (!strncmp((char *)&(info->mm_version[i]), "911", 3)) {
+					for (j = 0; j < info->miner_count[i]; j++) {
+						for (k = 0; k < AVA9_DEFAULT_PLL_CNT; k++) {
+							/* Avalon911 Fixed power and don't set freq */
+							if ((info->mm_version[i][3] != 'V') && (opt_avalon9_freq[k] == AVA9_DEFAULT_FREQUENCY))
+								info->set_frequency[i][j][k] = opt_avalon911_freq[k];
+							else if (opt_avalon9_freq[k] != AVA9_DEFAULT_FREQUENCY)
+								info->set_frequency[i][j][k] = opt_avalon9_freq[k];
+						}
 					}
 				}
+
 				avalon9_init_setting(avalon9, i);
 
 				info->freq_mode[i] = AVA9_FREQ_PLLADJ_MODE;
