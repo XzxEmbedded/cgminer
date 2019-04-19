@@ -30,6 +30,9 @@ int opt_avalon9_voltage_level_offset = AVA9_DEFAULT_VOLTAGE_LEVEL_OFFSET;
 int opt_avalon9_asic_otp = AVA9_INVALID_ASIC_OTP;
 static uint8_t opt_avalon9_cycle_hit_flag;
 
+/* Use to distinguish fac value for A911 and A910 */
+static uint8_t opt_avalon910_fac_bin4_flag = 0;
+
 int opt_avalon9_freq[AVA9_DEFAULT_PLL_CNT] =
 {
 	AVA9_DEFAULT_FREQUENCY,
@@ -877,9 +880,13 @@ static int decode_pkg(struct cgpu_info *avalon9, struct avalon9_ret *ar, int mod
 		applog(LOG_DEBUG, "%s-%d-%d: AVA9_P_STATUS_FAC", avalon9->drv->name, avalon9->device_id, modular_id);
 		info->factory_info[modular_id][0] = ar->data[0];
 
-		/* A911S overpower set target temperatrue */
-		if (info->factory_info[modular_id][0])
-			info->temp_target[modular_id] = AVA911S_DEFAULT_TEMP_TARGET;
+		/* A911S/A910S overpower set target temperatrue, A911S flag: 0, A910S flag: 1 */
+		if (info->factory_info[modular_id][0]) {
+			if (opt_avalon910_fac_bin4_flag)
+				info->temp_target[modular_id] = AVA910S_DEFAULT_TEMP_TARGET;
+			else
+				info->temp_target[modular_id] = AVA911S_DEFAULT_TEMP_TARGET;
+		}
 
 		info->factory_info[modular_id][AVA9_DEFAULT_FACTORY_INFO_CNT] = ar->data[1];
 		break;
@@ -1582,10 +1589,23 @@ static void detect_modules(struct cgpu_info *avalon9)
 		tmp = be32toh(tmp);
 		info->total_asics[i] = tmp;
 		info->temp_overheat[i] = AVA9_DEFAULT_TEMP_OVERHEAT;
-		if (info->mm_version[i][3] == 'V')
-			info->temp_target[i] = AVA911V_DEFAULT_TEMP_TARGET;
-		else
-			info->temp_target[i] = opt_avalon9_temp_target;
+
+		/* A911 target temperatuer */
+		if (!strncmp((char *)&(info->mm_version[i]), "911", 3)) {
+			if (info->mm_version[i][3] == 'V')
+				info->temp_target[i] = AVA911V_DEFAULT_TEMP_TARGET;
+			else
+				info->temp_target[i] = opt_avalon9_temp_target;
+		} else if (!strncmp((char *)&(info->mm_version[i]), "910", 3)) {
+			if (opt_avalon9_temp_target != AVA910_DEFAULT_TEMP_TARGET)
+				info->temp_target[i] = opt_avalon9_temp_target;
+			else
+				info->temp_target[i] = AVA910_DEFAULT_TEMP_TARGET;
+
+			/* FAC vaule for 1, A910 target temperature for BIN4 */
+			opt_avalon910_fac_bin4_flag = 1;
+		}
+
 		info->fan_pct[i] = opt_avalon9_fan_min;
 		for (j = 0; j < info->miner_count[i]; j++) {
 			if (opt_avalon9_voltage_level == AVA9_INVALID_VOLTAGE_LEVEL)
