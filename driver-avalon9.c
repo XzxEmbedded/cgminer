@@ -19,7 +19,6 @@
 #define get_fan_pwm(v)	(AVA9_PWM_MAX - (v) * AVA9_PWM_MAX / 100)
 
 int opt_avalon9_temp_target = AVA9_DEFAULT_TEMP_TARGET;
-int opt_avalon911s_temp_target = AVA911S_DEFAULT_TEMP_TARGET;
 
 int opt_avalon9_fan_min = AVA9_DEFAULT_FAN_MIN;
 int opt_avalon9_fan_max = AVA9_DEFAULT_FAN_MAX;
@@ -95,6 +94,7 @@ uint32_t opt_avalon9_adjust_volt_down_factor = AVA9_DEFAULT_ADJUST_VOLT_DOWN_FAC
 uint32_t opt_avalon9_adjust_volt_down_threshold = AVA9_DEFAULT_ADJUST_VOLT_DOWN_THRESHOLD;
 uint32_t opt_avalon9_adjust_volt_time = AVA9_DEFAULT_ADJUST_VOLT_TIME;
 
+/* A911 adjust frequence parameters */
 int32_t opt_avalon9_adjust_freq_up_init = AVA9_DEFAULT_ADJUST_FREQ_UP_INIT;
 uint32_t opt_avalon9_adjust_freq_up_factor = AVA9_DEFAULT_ADJUST_FREQ_UP_FACTOR;
 uint32_t opt_avalon9_adjust_freq_up_threshold = AVA9_DEFAULT_ADJUST_FREQ_UP_THRESHOLD;
@@ -102,6 +102,15 @@ int32_t opt_avalon9_adjust_freq_down_init = AVA9_DEFAULT_ADJUST_FREQ_DOWN_INIT;
 uint32_t opt_avalon9_adjust_freq_down_factor = AVA9_DEFAULT_ADJUST_FREQ_DOWN_FACTOR;
 uint32_t opt_avalon9_adjust_freq_down_threshold = AVA9_DEFAULT_ADJUST_FREQ_DOWN_THRESHOLD;
 uint32_t opt_avalon9_adjust_freq_time = AVA9_DEFAULT_ADJUST_FREQ_TIME;
+
+/* A910 adjust frequence parameters */
+int32_t opt_avalon910_adjust_freq_up_init = AVA910_DEFAULT_ADJUST_FREQ_UP_INIT;
+uint32_t opt_avalon910_adjust_freq_up_factor = AVA910_DEFAULT_ADJUST_FREQ_UP_FACTOR;
+uint32_t opt_avalon910_adjust_freq_up_threshold = AVA910_DEFAULT_ADJUST_FREQ_UP_THRESHOLD;
+int32_t opt_avalon910_adjust_freq_down_init = AVA910_DEFAULT_ADJUST_FREQ_DOWN_INIT;
+uint32_t opt_avalon910_adjust_freq_down_factor = AVA910_DEFAULT_ADJUST_FREQ_DOWN_FACTOR;
+uint32_t opt_avalon910_adjust_freq_down_threshold = AVA910_DEFAULT_ADJUST_FREQ_DOWN_THRESHOLD;
+uint32_t opt_avalon910_adjust_freq_time = AVA910_DEFAULT_ADJUST_FREQ_TIME;
 
 uint32_t cpm_table[] =
 {
@@ -1597,7 +1606,7 @@ static void detect_modules(struct cgpu_info *avalon9)
 			else
 				info->temp_target[i] = opt_avalon9_temp_target;
 		} else if (!strncmp((char *)&(info->mm_version[i]), "910", 3)) {
-			if (opt_avalon9_temp_target != AVA910_DEFAULT_TEMP_TARGET)
+			if (opt_avalon9_temp_target != AVA9_DEFAULT_TEMP_TARGET)
 				info->temp_target[i] = opt_avalon9_temp_target;
 			else
 				info->temp_target[i] = AVA910_DEFAULT_TEMP_TARGET;
@@ -2361,16 +2370,26 @@ static int64_t avalon9_scanhash(struct thr_info *thr)
 								opt_avalon9_adjust_volt_down_threshold,
 								opt_avalon9_adjust_volt_time);
 
-			avalon9_set_adjust_freq_option(avalon9, i,
-								opt_avalon9_adjust_freq_up_init,
-								opt_avalon9_adjust_freq_up_factor,
-								opt_avalon9_adjust_freq_up_threshold,
-								opt_avalon9_adjust_freq_down_init,
-								opt_avalon9_adjust_freq_down_factor,
-								opt_avalon9_adjust_freq_down_threshold,
-								opt_avalon9_adjust_freq_time);
-
-
+			/* A911 and A910 have different the adjusting frequrence parameters */
+			if (!strncmp((char *)&(info->mm_version[i]), "911", 3)) {
+				avalon9_set_adjust_freq_option(avalon9, i,
+									opt_avalon9_adjust_freq_up_init,
+									opt_avalon9_adjust_freq_up_factor,
+									opt_avalon9_adjust_freq_up_threshold,
+									opt_avalon9_adjust_freq_down_init,
+									opt_avalon9_adjust_freq_down_factor,
+									opt_avalon9_adjust_freq_down_threshold,
+									opt_avalon9_adjust_freq_time);
+			} else {
+				avalon9_set_adjust_freq_option(avalon9, i,
+									opt_avalon910_adjust_freq_up_init,
+									opt_avalon910_adjust_freq_up_factor,
+									opt_avalon910_adjust_freq_up_threshold,
+									opt_avalon910_adjust_freq_down_init,
+									opt_avalon910_adjust_freq_down_factor,
+									opt_avalon910_adjust_freq_down_threshold,
+									opt_avalon910_adjust_freq_time);
+			}
 
 			avalon9_set_asic_otp(avalon9, i, info->set_asic_otp[i]);
 			for (j = 0; j < info->miner_count[i]; j++)
